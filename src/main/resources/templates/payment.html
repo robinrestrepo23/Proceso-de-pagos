@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Formulario de Pago</title>
+    <meta charset="UTF-8">
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+            min-width: 300px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 5px;
+        }
+
+        .btn-light {
+            background-color: blue;
+            color: white;
+        }
+
+        .btn-dark {
+            background-color: white;
+            color: black;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 99;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            width: 300px;
+            border-radius: 10px;
+        }
+
+        .close {
+            float: right;
+            font-size: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body id="body">
+
+<div class="container">
+    <h2>Formulario de Pago</h2>
+
+    <form id="paymentForm" method="post" action="/process-payment" onsubmit="return false;">
+        <div class="form-group">
+            <label for="theme">Modo:</label>
+            <select name="theme" id="theme" onchange="changeTheme()">
+                <option value="light">Claro</option>
+                <option value="dark">Oscuro</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="paymentMethod">Método de Pago:</label>
+            <select name="paymentMethod" id="paymentMethod">
+                <option value="CREDIT_CARD">Tarjeta de Crédito</option>
+                <option value="DEBIT_CARD">Tarjeta de Débito</option>
+                <option value="PAYPAL">PayPal</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="amount">Monto a Retirar:</label>
+            <input type="number" name="amount" id="amount" required>
+        </div>
+
+        <div class="form-group">
+            <label for="notificationType">Tipo de Notificación:</label>
+            <select name="notificationType" id="notificationType">
+                <option value="email">Correo</option>
+                <option value="sms">SMS</option>
+                <option value="whatsapp">WhatsApp</option>
+            </select>
+        </div>
+
+        <input type="hidden" id="recipientHidden" name="recipient">
+        <button type="submit" id="submitButton" class="btn" onclick="openCorrectModal()">Procesar Pago</button>
+        <p th:if="${mensaje}" th:text="${mensaje}"></p>
+        <!-- Botón para generar PDF después de procesar pago -->
+        <div th:if="${mensaje}">
+            <button id="generatePdfButton" class="btn btn-light" onclick="openPdfModal()">Generar Reporte PDF</button>
+        </div>
+
+
+    </form>
+
+    <!-- Modal para opciones del PDF -->
+    <div id="pdfModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('pdfModal')">&times;</span>
+            <h3>Opciones de Reporte PDF</h3>
+            <form id="pdfForm" method="post" action="/generate-pdf">
+                <label><input type="checkbox" name="includeLogo" checked onchange="toggleLogoUpload()"> Incluir Logo</label><br>
+                <div id="logoUploadSection" style="display: none;">
+                    <label for="logo">Subir logo:</label>
+                    <input type="file" name="logo" id="logo" accept="image/*">
+                </div>
+                <label>Título:</label>
+                <input type="text" name="title" value="Reporte de Pago"><br>
+                <label><input type="checkbox" name="includePaymentDetails" checked> Incluir Detalles del Pago</label><br>
+                <label><input type="checkbox" name="includeUserInfo" checked> Incluir Información del Usuario</label><br>
+                <label>Tema:</label>
+                <select name="reportTheme" required>
+                    <option value="LIGHT">Claro</option>
+                    <option value="DARK">Oscuro</option>
+                </select><br>
+                <label><input type="checkbox" name="includeTimestamp" checked> Incluir Fecha y Hora</label><br>
+                <label>Mensaje en Pie de Página:</label>
+                <input type="text" name="footerMessage" value="Gracias por su compra"><br>
+                <label>Formato:</label>
+                <select name="format">
+                    <option value="A4">A4</option>
+                    <option value="LETTER">LETTER</option>
+                </select><br><br>
+                <button type="submit" class="btn btn-light">Generar PDF</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Email -->
+    <div id="emailModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('emailModal')">&times;</span>
+            <h3>Detalles de notificación por correo</h3>
+            <input type="email" id="emailRecipient" placeholder="Correo destino" required>
+            <input type="text" id="emailSubject" placeholder="Asunto" required>
+            <textarea id="emailBody" placeholder="Contenido del mensaje" required></textarea>
+            <select id="emailPriority">
+                <option value="1">1.Alta</option>
+                <option value="2">2.Media</option>
+                <option value="3">3.Baja</option>
+            </select>
+            <button type="button" onclick="submitForm('email')">Confirmar</button>
+        </div>
+    </div>
+
+    <!-- Modal para SMS -->
+    <div id="smsModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('smsModal')">&times;</span>
+            <h3 th:color="black">Detalles de notificación por SMS</h3>
+            <input type="text" id="smsRecipient" placeholder="Número de teléfono" required>
+            <textarea id="smsBody" placeholder="Contenido del SMS" required></textarea>
+            <select id="smsPriority">
+                <option value="1">1.Alta</option>
+                <option value="2">2.Media</option>
+                <option value="3">3.Baja</option>
+            </select>
+            <button type="button" onclick="submitForm('sms')">Confirmar</button>
+        </div>
+    </div>
+
+    <!-- Modal para WhatsApp -->
+    <div id="whatsappModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('whatsappModal')">&times;</span>
+            <h3>Detalles de notificación por WhatsApp</h3>
+            <input type="text" id="whatsappRecipient" placeholder="Número de WhatsApp" required>
+            <textarea id="whatsappBody" placeholder="Contenido del mensaje" required></textarea>
+            <select id="whatsappPriority">
+                <option value="1">1.Alta</option>
+                <option value="2">2.Media</option>
+                <option value="3">3.Baja</option>
+            </select>
+            <button type="button" onclick="submitForm('whatsapp')">Confirmar</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function changeTheme() {
+        const theme = document.getElementById("theme").value;
+        applyTheme(theme);
+        localStorage.setItem("theme", theme);
+    }
+
+    function applyTheme(theme) {
+        const body = document.getElementById("body");
+        const button = document.getElementById("submitButton");
+        const container = document.querySelector(".container");
+
+        if (theme === "dark") {
+            body.style.backgroundColor = "#121212";
+            body.style.color = "#ffffff";
+            container.style.backgroundColor = "rgba(30,30,30,0.95)";
+            button.classList.remove("btn-light");
+            button.classList.add("btn-dark");
+        } else {
+            body.style.backgroundColor = "#ffffff";
+            body.style.color = "#000000";
+            container.style.backgroundColor = "rgba(255,255,255,0.95)";
+            button.classList.remove("btn-dark");
+            button.classList.add("btn-light");
+        }
+
+        document.getElementById("theme").value = theme;
+    }
+
+    window.onload = function () {
+        const savedTheme = localStorage.getItem("theme") || "light";
+        applyTheme(savedTheme);
+    };
+
+    function openCorrectModal() {
+        const notificationType = document.getElementById("notificationType").value;
+
+        if (notificationType === "email") {
+            document.getElementById("emailModal").style.display = "block";
+        } else if (notificationType === "sms") {
+            document.getElementById("smsModal").style.display = "block";
+        } else if (notificationType === "whatsapp") {
+            document.getElementById("whatsappModal").style.display = "block";
+        }
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = "none";
+    }
+
+    function openPdfModal() {
+        document.getElementById("pdfModal").style.display = "block";
+    }
+
+
+
+    function submitForm(type) {
+        const form = document.getElementById("paymentForm");
+
+        // Primero limpiamos los inputs ocultos anteriores
+        Array.from(form.querySelectorAll('input[type="hidden"]')).forEach(input => {
+            if (input.name !== "recipient") {
+                form.removeChild(input);
+            }
+        });
+
+        let recipient = "";
+        let subject = "";
+        let body = "";
+        let priority = "";
+
+        if (type === "email") {
+            recipient = document.getElementById("emailRecipient").value.trim();
+            subject = document.getElementById("emailSubject").value.trim();
+            body = document.getElementById("emailBody").value.trim();
+            priority = document.getElementById("emailPriority").value;
+        } else if (type === "sms") {
+            recipient = document.getElementById("smsRecipient").value.trim();
+            body = document.getElementById("smsBody").value.trim();
+            priority = document.getElementById("smsPriority").value;
+            subject = ""; // SMS no usa asunto
+        } else if (type === "whatsapp") {
+            recipient = document.getElementById("whatsappRecipient").value.trim();
+            body = document.getElementById("whatsappBody").value.trim();
+            priority = document.getElementById("whatsappPriority").value;
+            subject = ""; // WhatsApp no usa asunto
+        }
+
+        if (!recipient) {
+            alert("Por favor llena los datos requeridos.");
+            return;
+        }
+
+        // Asignar el recipient al input oculto
+        document.getElementById("recipientHidden").value = recipient;
+
+        document.getElementById("notificationType").value= type;
+        // Agregar otros datos ocultos
+        addHiddenInput(form, "subject", subject);
+        addHiddenInput(form, "body", body);
+        addHiddenInput(form, "priority", priority);
+
+        closeModal(type + "Modal");
+
+        setTimeout(() => {
+            form.submit();
+        }, 300);
+    }
+
+    function addHiddenInput(form, name, value) {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = name;
+        input.value = value;
+        form.appendChild(input);
+    }
+    document.getElementById("pdfForm").addEventListener("submit", function (e) {
+        e.preventDefault(); // Evita el envío tradicional
+
+        const form = e.target;
+        const formData = new FormData(form);
+
+        fetch("/generate-pdf", {
+            method: "POST",
+            body: formData
+        })
+            .then(response => {
+                if (!response.ok) throw new Error("Error al generar el PDF");
+                return response.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "reporte_pago.pdf";
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+                closeModal("pdfModal"); // Cierra el modal
+            })
+            .catch(err => {
+                alert("Error al generar el PDF: " + err.message);
+            });
+    });
+
+    function toggleLogoUpload() {
+        const checkbox = document.getElementById("includeLogo");
+        const logoSection = document.getElementById("logoUploadSection");
+        logoSection.style.display = checkbox.checked ? "block" : "none";
+    }
+
+</script>
+
+</body>
+</html>
+
+
