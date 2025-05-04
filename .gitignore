@@ -14,3 +14,6 @@ target/
 # Ignorar configuraciones del sistema
 .DS_Store
 Thumbs.db
+
+# Ignorar cualquier archivo de configuración local
+src/main/resources/*.properties

@@ -15,8 +15,10 @@ public class WhatsAppSenderService {
     @Value("${twilio.phone.number}")
     private String fromPhoneNumber;
 
-    public static final String accountSid = System.getenv("TWILIO_ACCOUNT_SID");
-    public static final String authToken = System.getenv("TWILIO_AUTH_TOKEN");
+    @Value("${twilio.account.sid}")
+    private String accountSid;
+    @Value("${twilio.auth.token}")
+    private String authToken;
 
     public void sendWhatsApp(WhatsappNotification whatsAppNotification) {
         Twilio.init(accountSid, authToken);

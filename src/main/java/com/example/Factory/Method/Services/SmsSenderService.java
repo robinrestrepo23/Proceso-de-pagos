@@ -11,12 +11,13 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class SmsSenderService {
-
     @Value("${twilio.phone.number}")
     private String fromPhoneNumber;
 
-    public static final String accountSid = System.getenv("TWILIO_ACCOUNT_SID");
-    public static final String authToken = System.getenv("TWILIO_AUTH_TOKEN");
+    @Value("${twilio.account.sid}")
+    private String accountSid;
+    @Value("${twilio.auth.token}")
+    private String authToken;
 
     public void sendSms(SmsNotification smsNotification) {
         Twilio.init(accountSid, authToken);
