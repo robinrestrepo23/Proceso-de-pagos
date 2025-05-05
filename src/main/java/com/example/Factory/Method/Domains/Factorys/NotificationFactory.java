@@ -25,31 +25,30 @@ public class NotificationFactory {
     }
 
     public Notification createNotification(
-            String type,
-            String recipient,
-            String subject,
-            String body,
-            int priority
+            Notification notification
     ) {
-        if ("email".equalsIgnoreCase(type)) {
-            return emailNotificationBuilder
-                    .recipient(recipient)
-                    .subject(subject)
-                    .body(body)
-                    .priority(priority)
-                    .build();
-        } else if ("sms".equalsIgnoreCase(type)) {
-            return smsNotificationBuilder
-                    .setRecipient(recipient)
-                    .setBody(body)
-                    .build();
-        } else if ("whatsapp".equalsIgnoreCase(type)) {
-            return notificationBuilderWhatsapp
-                    .setRecipient(recipient)
-                    .setBody(body)
-                    .build();
-        } else {
-            throw new IllegalArgumentException("Tipo de notificación no soportado: " + type);
+        switch (notification.getType().toLowerCase()) {
+            case "email":
+                return emailNotificationBuilder
+                        .setRecipient(notification.getRecipient())
+                        .setSubject(notification.getSubject())
+                        .setBody(notification.getBody())
+                        .setPriority(notification.getPriority())
+                        .build();
+            case "sms":
+                return smsNotificationBuilder
+                        .setRecipient(notification.getRecipient())
+                        .setBody(notification.getBody())
+                        .setPriority(notification.getPriority())
+                        .build();
+            case "whatsapp":
+                return notificationBuilderWhatsapp
+                        .setRecipient(notification.getRecipient())
+                        .setBody(notification.getBody())
+                        .setPriority(notification.getPriority())
+                        .build();
+            default:
+                throw new IllegalArgumentException("Tipo de notificación no soportado: " + notification.getType());
         }
     }
 }

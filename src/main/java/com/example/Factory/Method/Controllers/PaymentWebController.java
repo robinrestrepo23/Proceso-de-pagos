@@ -62,9 +62,9 @@ public class PaymentWebController {
             String finalBody = buildNotificationBody(paymentMethod, amount, result, body);
             String finalSubject = (subject == null || subject.isBlank()) ? "Confirmación de pago" : subject;
 
-            Notification notification = notificationFactory.createNotification(
-                    notificationType, recipient, finalSubject, finalBody, priority
-            );
+            Notification noti = new Notification("",notificationType, recipient, finalSubject,finalBody, priority);
+
+            Notification notification = notificationFactory.createNotification(noti);
             sendNotification(notificationType, notification, model);
 
             this.payment = new Payment(paymentMethod, amount, result, recipient, "Exitoso");
