@@ -46,4 +46,13 @@ public class PaymentController {
     public List<Payment> getPaymentsByRecipient(@PathVariable String recipient) {
         return service.getPaymentsByRecipient(recipient);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletePayment(@PathVariable Long id) {
+        if (service.deletePaymentById(id)) {
+            return ResponseEntity.noContent().build(); // 204 No Content
+        } else {
+            return ResponseEntity.notFound().build(); // 404 Not Found
+        }
+    }
 }

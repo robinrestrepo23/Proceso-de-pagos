@@ -42,6 +42,7 @@
         </div>
 
         <input type="hidden" id="recipientHidden" name="recipient">
+
         <button type="submit" id="submitButton" class="btn" onclick="openCorrectModal()">Procesar Pago</button>
         <p id="paymentMessage" style="display:none;"></p>
 
@@ -80,38 +81,54 @@
         </div>
     </div>
 
-    <!-- Modal para opciones del PDF -->
+    <!-- Formulario para generar PDF desde la API -->
     <div id="pdfModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal('pdfModal')">&times;</span>
-            <h3>Opciones de Reporte PDF</h3>
-            <form id="pdfForm">
-                <label><input type="checkbox" name="includeLogo" checked onchange="toggleLogoUpload()"> Incluir Logo</label><br>
-                <div id="logoUploadSection" style="display: none;">
-                    <label for="logo">Subir logo:</label>
-                    <input type="file" name="logo" id="logo" accept="image/*">
-                </div>
-                <label>Título:</label>
-                <input type="text" name="title" value="Reporte de Pago"><br>
-                <label><input type="checkbox" name="includePaymentDetails" checked> Incluir Detalles del Pago</label><br>
-                <label><input type="checkbox" name="includeUserInfo" checked> Incluir Información del Usuario</label><br>
-                <label>Tema:</label>
-                <select name="reportTheme" required>
-                    <option value="LIGHT">Claro</option>
-                    <option value="DARK">Oscuro</option>
-                </select><br>
-                <label><input type="checkbox" name="includeTimestamp" checked> Incluir Fecha y Hora</label><br>
-                <label>Mensaje en Pie de Página:</label>
-                <input type="text" name="footerMessage" value="Gracias por su compra"><br>
-                <label>Formato:</label>
-                <select name="format">
-                    <option value="A4">A4</option>
-                    <option value="LETTER">LETTER</option>
-                </select><br><br>
-                <button type="submit" class="btn btn-light">Generar PDF</button>
-            </form>
-        </div>
+    <div style="margin-top: 40px;" class="modal-content">
+        <span class="close" onclick="closeModal('pdfModal')">&times;</span>
+        <h3>Generar Reporte PDF desde API</h3>
+        <form id="pdfApiForm" method="post" enctype="multipart/form-data" action="/api/pdf/generate">
+            <input type="hidden" name="paymentId" id="paymentIdField" value> <!-- Puedes cambiarlo dinámicamente -->
+
+            <label>Título del Reporte:</label><br>
+            <input type="text" name="title" value="Reporte de Pago"><br><br>
+
+            <label>¿Incluir logo?</label>
+            <input type="checkbox" name="includeLogo" onchange="toggleApiLogoUpload(this)"> <br>
+            <div id="apiLogoUploadSection" style="display:none;">
+                <label>Subir Logo:</label>
+                <input type="file" name="logo" accept="image/*">
+            </div><br>
+
+            <label>Detalles del Pago:</label>
+            <input type="checkbox" name="includePaymentDetails" checked><br>
+
+            <label>Información del Usuario:</label>
+            <input type="checkbox" name="includeUserInfo" checked><br>
+
+            <label>Tema:</label>
+            <select name="reportTheme">
+                <option value="LIGHT">Claro</option>
+                <option value="DARK">Oscuro</option>
+            </select><br>
+
+            <label>¿Incluir Fecha y Hora?</label>
+            <input type="checkbox" name="includeTimestamp" checked><br>
+
+            <label>Mensaje en el pie:</label><br>
+            <input type="text" name="footerMessage" value="Gracias por su compra"><br>
+
+            <label>Formato:</label>
+            <select name="format">
+                <option value="A4">A4</option>
+                <option value="LETTER">LETTER</option>
+            </select><br><br>
+
+            <button type="submit" class="btn btn-success">Generar PDF desde API</button>
+        </form>
     </div>
+    </div>
+
+</div>
 
     <!-- Modal para Email -->
     <div id="emailModal" class="modal">

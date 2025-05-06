@@ -52,4 +52,14 @@ public class PaymentService {
     public List<Payment> getPaymentsByRecipient(String username) {
         return repository.findByRecipient(username);
     }
+
+    public boolean deletePaymentById(Long id) {
+        Optional<Payment> optional = repository.findById(id);
+        if (optional.isPresent()) {
+            repository.deleteById(id);
+            return true;
+        }
+        return false;
+    }
+
 }
