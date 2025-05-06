@@ -51,71 +51,86 @@ function openPdfModal() {
     document.getElementById("pdfModal").style.display = "block";
 }
 
-
-
 function submitForm(type) {
-    const form = document.getElementById("paymentForm");
-
-    // Primero limpiamos los inputs ocultos anteriores
-    Array.from(form.querySelectorAll('input[type="hidden"]')).forEach(input => {
-        if (input.name !== "recipient") {
-            form.removeChild(input);
-        }
-    });
+    const paymentMethod = document.getElementById("paymentMethod").value;
+    const amount = parseFloat(document.getElementById("amount").value);
+    const theme = document.getElementById("theme").value;
 
     let recipient = "";
     let subject = "";
     let body = "";
-    let priority = "";
+    let priority = 1;
 
     if (type === "email") {
         recipient = document.getElementById("emailRecipient").value.trim();
         subject = document.getElementById("emailSubject").value.trim();
         body = document.getElementById("emailBody").value.trim();
-        priority = document.getElementById("emailPriority").value;
+        priority = parseInt(document.getElementById("emailPriority").value);
     } else if (type === "sms") {
         recipient = document.getElementById("smsRecipient").value.trim();
         body = document.getElementById("smsBody").value.trim();
-        priority = document.getElementById("smsPriority").value;
-        subject = ""; // SMS no usa asunto
+        priority = parseInt(document.getElementById("smsPriority").value);
     } else if (type === "whatsapp") {
         recipient = document.getElementById("whatsappRecipient").value.trim();
         body = document.getElementById("whatsappBody").value.trim();
-        priority = document.getElementById("whatsappPriority").value;
-        subject = ""; // WhatsApp no usa asunto
+        priority = parseInt(document.getElementById("whatsappPriority").value);
     }
 
-    if (!recipient) {
-        alert("Por favor llena los datos requeridos.");
+    if (!recipient || !paymentMethod || isNaN(amount)) {
+        alert("Por favor llena todos los campos requeridos.");
         return;
     }
 
-    // Asignar el recipient al input oculto
-    document.getElementById("recipientHidden").value = recipient;
+    // Primero procesar el pago con el tipo y monto
+    fetch("/api/payments/process?paymentType=" + encodeURIComponent(paymentMethod) + "&amount=" + amount, {
+        method: "POST"
+    })
+        .then(res => res.json())
+        .then(result => {
+            // Luego guardar el pago
+            const payment = {
+                paymentMethod: paymentMethod,
+                amount: amount,
+                amountFinal: result,
+                subject: subject,
+                body: body,
+                notification: type,
+                username: recipient,
+                status: "Exitoso",
+            };
 
-    document.getElementById("notificationType").value= type;
-    // Agregar otros datos ocultos
-    addHiddenInput(form, "subject", subject);
-    addHiddenInput(form, "body", body);
-    addHiddenInput(form, "priority", priority);
+            return fetch("/api/payments", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payment)
+            });
+        })
+        .then(res => {
+            if (!res.ok) throw new Error("Error al guardar el pago en la API.");
+            return res.json();
+        })
+        .then(savedPayment => {
+            //Mostrar mensaje de éxito
+            document.getElementById("paymentMessage").innerText = "Pago procesado correctamente y notificación enviada a "+type+".";
+            document.getElementById("paymentMessage").style.display = "block";
+
+            // Mostrar el botón para generar el PDF
+            document.getElementById("generatePdfButton").style.display = "block";
+
+            alert("✅ Pago procesado correctamente. ID: " + savedPayment.transactionId);
+        })
+        .catch(err => {
+            alert("❌ Error al procesar el pago: " + err.message);
+        });
 
     closeModal(type + "Modal");
-
     setTimeout(() => {
         form.submit();
     }, 300);
 }
 
-function addHiddenInput(form, name, value) {
-    const input = document.createElement("input");
-    input.type = "hidden";
-    input.name = name;
-    input.value = value;
-    form.appendChild(input);
-}
 document.getElementById("pdfForm").addEventListener("submit", function (e) {
-    e.preventDefault(); // Evita el envío tradicional
-
+    e.preventDefault();
     const form = e.target;
     const formData = new FormData(form);
 
@@ -124,7 +139,9 @@ document.getElementById("pdfForm").addEventListener("submit", function (e) {
         body: formData
     })
         .then(response => {
-            if (!response.ok) throw new Error("Error al generar el PDF");
+            if (!response.ok) {
+                throw new Error("Error al generar el PDF.");
+            }
             return response.blob();
         })
         .then(blob => {
@@ -136,15 +153,50 @@ document.getElementById("pdfForm").addEventListener("submit", function (e) {
             a.click();
             a.remove();
             window.URL.revokeObjectURL(url);
-            closeModal("pdfModal"); // Cierra el modal
         })
         .catch(err => {
-            alert("Error al generar el PDF: " + err.message);
+            alert(err.message);
         });
 });
+
+function fetchPaymentHistory() {
+    fetch("/api/payments")
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Error al cargar el historial");
+            }
+            return response.json();
+        })
+        .then(data => {
+            const tbody = document.getElementById("paymentHistoryBody");
+            tbody.innerHTML = ""; // Limpiar anteriores
+
+            data.forEach(p => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${p.paymentMethod}</td>
+                    <td>$${p.amount.toFixed(2)}</td>
+                    <td>$${p.amountFinal.toFixed(2)}</td>
+                    <td>${p.notification}</td>
+                    <td>${p.username}</td>
+                    <td>${p.status}</td>
+                    <td>${p.timestamp}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            document.getElementById("paymentHistory").style.display = "block";
+        })
+        .catch(error => {
+            alert("❌ No se pudo cargar el historial de pagos.");
+            console.error(error);
+        });
+}
+
 
 function toggleLogoUpload() {
     const checkbox = document.getElementById("includeLogo");
     const logoSection = document.getElementById("logoUploadSection");
     logoSection.style.display = checkbox.checked ? "block" : "none";
 }
+

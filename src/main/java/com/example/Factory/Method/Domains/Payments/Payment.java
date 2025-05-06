@@ -1,28 +1,47 @@
 package com.example.Factory.Method.Domains.Payments;
 
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import org.springframework.data.annotation.Id;
+
+import java.time.LocalDateTime;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@Entity
 public class Payment {
-    private static final AtomicInteger ID_GENERATOR = new AtomicInteger(1);
-
-    private int transactionId;
+    @jakarta.persistence.Id
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long transactionId;
     private String paymentMethod;
     private double amount;
     private double amountFinal;
-    private String username;
+    private String body;
+    private String subject;
+    private String notification;
+    private String recipient;
     private String status;
+    private LocalDateTime timestamp;
 
-    public Payment(String paymentMethod, double amount, double result, String recipient, String exitoso) {
-        this.transactionId = ID_GENERATOR.getAndIncrement();
+
+    public Payment(String paymentMethod, double amount, double result, String body, String subject, String notification, String recipient, String exitoso) {
         this.paymentMethod = paymentMethod;
         this.amount = amount;
         this.amountFinal = result;
-        this.username = recipient;
+        this.body = body;
+        this.subject = subject;
+        this.notification = notification;
+        this.recipient = recipient;
         this.status = exitoso;
     }
 
-    public int getTransactionId() {
+    public Payment() {
+
+    }
+
+    public Long getTransactionId() {
         return transactionId;
     }
 
@@ -51,12 +70,36 @@ public class Payment {
         this.amountFinal = amountFinal;
     }
 
+    public String getBody() {
+        return body;
+    }
+
+    public void setBody(String body) {
+        this.body = body;
+    }
+
+    public String getSubject() {
+        return subject;
+    }
+
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
+
+    public String getNotification() {
+        return notification;
+    }
+
+    public void setNotification(String notification) {
+        this.notification = notification;
+    }
+
     public void setUsername(String username) {
-        this.username = username;
+        this.recipient = username;
     }
 
     public String getUsername() {
-        return username;
+        return recipient;
     }
 
     public void setStatus(String status) {
@@ -65,6 +108,18 @@ public class Payment {
 
     public String getStatus() {
         return status;
+    }
+
+    public void setTransactionId(Long transactionId) {
+        this.transactionId = transactionId;
+    }
+
+    public LocalDateTime getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(LocalDateTime timestamp) {
+        this.timestamp = timestamp;
     }
 }
 

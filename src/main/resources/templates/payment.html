@@ -43,19 +43,49 @@
 
         <input type="hidden" id="recipientHidden" name="recipient">
         <button type="submit" id="submitButton" class="btn" onclick="openCorrectModal()">Procesar Pago</button>
-        <p th:if="${mensaje}" th:text="${mensaje}"></p>
+        <p id="paymentMessage" style="display:none;"></p>
+
+
         <!-- Botón para generar PDF después de procesar pago -->
-        <div th:if="${mensaje}">
-            <button id="generatePdfButton" class="btn btn-light" onclick="openPdfModal()">Generar Reporte PDF</button>
+        <div id="generatePdfButton" style="display:none;">
+            <button class="btn btn-light" onclick="openPdfModal()">Generar Reporte PDF</button>
         </div>
     </form>
+
+    <!-- Botón para mostrar historial de pagos -->
+    <div style="margin-top: 20px;">
+        <button class="btn" onclick="fetchPaymentHistory()">Ver Historial de Pagos</button>
+    </div>
+
+    <!-- Sección donde se cargará el historial de pagos -->
+    <div id="paymentHistory" style="display: none; margin-top: 30px;">
+        <h4 class="text-center mb-3">📋 Historial de Pagos</h4>
+        <div class="table-responsive shadow-sm rounded">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-dark text-center">
+                <tr>
+                    <th>Método</th>
+                    <th>Monto</th>
+                    <th>Monto Final</th>
+                    <th>Enviado a</th>
+                    <th>Usuario</th>
+                    <th>Estado</th>
+                    <th>Fecha</th>
+                </tr>
+                </thead>
+                <tbody id="paymentHistoryBody" class="text-center">
+                <!-- Filas dinámicas -->
+                </tbody>
+            </table>
+        </div>
+    </div>
 
     <!-- Modal para opciones del PDF -->
     <div id="pdfModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal('pdfModal')">&times;</span>
             <h3>Opciones de Reporte PDF</h3>
-            <form id="pdfForm" method="post" action="/generate-pdf">
+            <form id="pdfForm">
                 <label><input type="checkbox" name="includeLogo" checked onchange="toggleLogoUpload()"> Incluir Logo</label><br>
                 <div id="logoUploadSection" style="display: none;">
                     <label for="logo">Subir logo:</label>

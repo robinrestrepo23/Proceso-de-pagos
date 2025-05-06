@@ -63,3 +63,15 @@ body {
     font-size: 20px;
     cursor: pointer;
 }
+ #paymentHistory table {
+     background-color: #fff;
+ }
+
+#paymentHistory h4 {
+    color: #333;
+    font-weight: bold;
+}
+
+#paymentHistory td, #paymentHistory th {
+    vertical-align: middle;
+}

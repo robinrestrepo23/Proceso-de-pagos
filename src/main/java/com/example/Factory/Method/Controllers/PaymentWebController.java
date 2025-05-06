@@ -15,6 +15,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.result.view.RedirectView;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 @Controller
 public class PaymentWebController {
@@ -27,7 +29,11 @@ public class PaymentWebController {
     @Autowired private WhatsAppSenderService whatsAppSenderService;
     @Autowired private PdfGeneratorService pdfGeneratorService;
 
+
     private Payment payment;
+
+    private final List<Payment> paymentHistory = new ArrayList<>();
+    private Payment lastPayment;
 
     @GetMapping("/")
     public RedirectView redirectToPayment() {
@@ -42,7 +48,7 @@ public class PaymentWebController {
         return "payment";
     }
 
-    @PostMapping("/process-payment")
+    @GetMapping("/process-payment")
     public String processPayment(
             @RequestParam String paymentMethod,
             @RequestParam double amount,
@@ -55,6 +61,9 @@ public class PaymentWebController {
             Model model) {
 
         try {
+            System.out.println(
+                    "DESDE PROCESS"
+            );
 
             PaymentProcessor processor = paymentProcessorFactory.getPaymentProcessor(paymentMethod);
             double result = processor.processPayment(amount);
@@ -67,7 +76,7 @@ public class PaymentWebController {
             Notification notification = notificationFactory.createNotification(noti);
             sendNotification(notificationType, notification, model);
 
-            this.payment = new Payment(paymentMethod, amount, result, recipient, "Exitoso");
+            this.payment = new Payment(paymentMethod, amount, result, body,subject, notificationType, recipient, "Exitoso");
 
         } catch (Exception e) {
             model.addAttribute("mensaje", "Pago procesado, pero error al enviar la notificación: " + e.getMessage());
